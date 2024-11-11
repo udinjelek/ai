@@ -1,0 +1,15 @@
+.navbar {
+    position: relative;  // Make sure the element is positioned
+    z-index: 10;       // Assign a high z-index value to ensure it's above other elements
+  }
+
+  .scrollable-content {
+    width: 800px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+  
+  .nav-item .active {
+    background-color: rgb(253, 253, 253) !important; /* Change background color to red when active */
+    color: rgb(5, 0, 70) !important; /* Ensure the text color remains white */
+  }

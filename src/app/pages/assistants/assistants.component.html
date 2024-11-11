@@ -1,0 +1,364 @@
+<div class="container-fluid px-0" style="height: 100vh;">
+    <!-- Top Navigation/Progress Bar -->
+    <div class="d-flex justify-content-between align-items-center py-2 bg-dark text-light navbar">
+      <ul class="nav">
+        <li class="nav-item d-flex justify-content-center align-items-center" style="width:300px ; height:50px; ">
+          <a class="nav-link text-light d-flex justify-content-center align-items-center" [class.active]="modeNow === 'assistant'" (click)="goToStep('assistant')">
+            <!-- Left part: Assistant text -->
+            <span class="px-3">Assistant</span>
+            <!-- Right part: Assistant name and ID -->
+            <div class="d-flex flex-column text-end" *ngIf="activeAssistant">
+              <span [title]="activeAssistant.name"> {{ activeAssistant.name.length > 20 ? (activeAssistant.name | slice:0:18) + '...' : activeAssistant.name }}</span> <!-- Assistant name (top) -->
+              <span style="font-size: 0.6rem;">{{ activeAssistant.id }}</span> <!-- Assistant ID (bottom, smaller and muted) -->
+            </div>
+            <div class="d-flex flex-column text-end" *ngIf="!activeAssistant">
+              <span> Blank</span> <!-- Assistant name (top) -->
+            </div>
+          </a>
+        </li>
+        <li class="nav-item d-flex justify-content-center align-items-center" style="width:300px ; height:50px;">
+          <a class="nav-link text-light d-flex justify-content-center align-items-center" [class.active]="modeNow === 'file'" (click)="goToStep('file')">
+            <!-- Left part: Assistant text -->
+            <span class="px-3">File</span>
+            <!-- Right part: Assistant name and ID -->
+            <div class="d-flex flex-column text-end" *ngIf="activeFile">
+              <span [title]="activeFile.filename"> {{ activeFile.filename.length > 20 ? (activeFile.filename | slice:0:18) + '...' : activeFile.filename }}</span> <!-- Assistant name (top) -->
+              <span style="font-size: 0.6rem;">{{ activeFile.id }}</span> <!-- Assistant ID (bottom, smaller and muted) -->
+            </div>
+            <div class="d-flex flex-column text-end" *ngIf="!activeFile">
+              <span> Blank</span> <!-- Assistant name (top) -->
+            </div>
+          </a>
+        </li>
+        <li class="nav-item d-flex justify-content-center align-items-center" style="width:300px ; height:50px; ">
+          <a class="nav-link text-light d-flex justify-content-center align-items-center" [class.active]="modeNow === 'assistant_file'" (click)="goToStep('assistant_file')">Assistant File</a>
+        </li>
+        <li class="nav-item d-flex justify-content-center align-items-center" style="width:300px ; height:50px; ">
+          <a class="nav-link text-light d-flex justify-content-center align-items-center" [class.active]="modeNow === 'run'" (click)="goToStep('run')">Run</a>
+        </li>
+      </ul>
+  
+      <!-- Config Icon -->
+      <div>
+        <button class="btn btn-outline-light" (click)="toggleConfigPopup()">
+          <i class="bi bi-gear"></i> <!-- Bootstrap Icon for gear (settings) -->
+        </button>
+      </div>
+    </div>
+  
+    <!-- Main Content Area -->
+    <div class="d-flex flex-grow-1 justify-content-between align-items-center" style="height: calc(100vh - 70px);">  
+    
+        <button class="btn btn-outline-dark align-self-center" style="height: 50vh;" (click)="goToPreviousStep()">
+            &lt;
+        </button>
+
+        <div>
+            <div *ngIf="modeNow === 'assistant'" class="row scrollable-content ">
+                <!-- list assistant -->
+                <div class="col-md-4 pt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h3>List Assistant</h3>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="refreshListAssistants()">
+                        <i class="bi bi-arrow-clockwise"></i> <!-- Refresh Icon -->
+                      </button>
+                    </div>
+                
+                    <!-- Assistant List Group -->
+                    <ul class="list-group mt-4">
+                    
+                      <li *ngFor="let assistant of assistants; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
+                        <div (click)="selectAsistant(assistant)">
+                          <ng-container *ngIf="assistant">
+                          <ng-container *ngIf="assistant.name">
+                            <div [title]="assistant.name"> {{ assistant.name.length > 20 ? (assistant.name | slice:0:18) + '...' : assistant.name }}</div>
+                          </ng-container>
+                          </ng-container>
+                          <div class="text-muted" style="font-size: 0.55rem;">{{assistant.id}}</div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" (click)="confirmDeleteAssistant(i)">
+                          <i class="bi bi-trash"></i> <!-- Delete Icon -->
+                        </button>
+                      </li>
+                    </ul>
+                </div>
+
+                 <!-- Dashed Line Separator -->
+                <div class="col-md-1 d-flex justify-content-center align-items-center">
+                    <div style="border-left: 3px dashed rgba(128, 128, 128, 0.2); height: 100%;"></div>
+                </div>
+                
+                <!-- create assistant -->
+                <div class="col-md-7 pt-4">
+                    <!-- Title -->
+                    <h3 class="text-center">Create Assistant</h3>
+
+                    <!-- Instruction Input Box (Scrollable) -->
+                    <div class="form-group">
+                        <label for="instructions">Instructions</label>
+                        <textarea id="instructions" class="form-control" [(ngModel)]="instructions" rows="10" style="resize: none; overflow-y: auto;"></textarea>
+                    </div>
+
+                    <!-- Name Input Box -->
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input id="name" class="form-control" type="text" [(ngModel)]="name" placeholder="Enter assistant name">
+                    </div>
+
+                    <!-- Type Dropdown (Choice Box) -->
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select id="type" class="form-control" [(ngModel)]="type">
+                        <option value="code_interpreter">Code Interpreter</option>
+                        <option value="file_search">File Search</option>
+                        <option value="function">Function</option>
+                        </select>
+                    </div>
+
+                    <!-- Model Input Box -->
+                    <div class="form-group">
+                        <label for="model">Model</label>
+                        <input id="model" class="form-control" type="text" [(ngModel)]="model" placeholder="Enter model name">
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <button class="btn btn-primary" (click)="createAssistant()">Create Assistant</button>
+                    </div>
+
+                </div>
+
+            </div>
+            <div *ngIf="modeNow === 'file'" class="row scrollable-content ">
+                <!-- list file -->
+                <div class="col-md-4 pt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h3>List File</h3>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="refreshListFiles()">
+                      <i class="bi bi-arrow-clockwise"></i> <!-- Refresh Icon -->
+                    </button>
+                  </div>
+              
+                  <!-- file List Group -->
+                  <ul class="list-group mt-4">
+                  
+                    <li *ngFor="let file of files; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
+                      <div (click)="selectFile(file)">
+                        <ng-container *ngIf="file">
+                        <ng-container *ngIf="file.filename">
+                          <div [title]="file.filename"> {{ file.filename.length > 20 ? (file.filename | slice:0:18) + '...' : file.filename }}</div>
+                        </ng-container>
+                        </ng-container>
+                        <div class="text-muted" style="font-size: 0.55rem;">{{file.id}}</div>
+                      </div>
+                      <button class="btn btn-danger btn-sm" (click)="confirmDeleteFile(i)">
+                        <i class="bi bi-trash"></i> <!-- Delete Icon -->
+                      </button>
+                    </li>
+                  </ul>
+              </div>
+
+                <!-- Dashed Line Separator -->
+              <div class="col-md-1 d-flex justify-content-center align-items-center">
+                  <div style="border-left: 3px dashed rgba(128, 128, 128, 0.2); height: 100%;"></div>
+              </div>
+              
+              <!-- create file -->
+              <div class="col-md-7 pt-4">
+                  <!-- Title -->
+                  <h3 class="text-center">Create File</h3>
+
+                  <!-- Instruction Input Box (Scrollable) -->
+                  <div class="form-group">
+                    <label for="fileInput" class="form-label">Select File</label>
+                    <input type="file" id="fileInput" class="form-control" (change)="onFileSelected($event)">
+                  </div>
+
+                  <!-- Type Dropdown (Choice Box) -->
+                  <div class="form-group">
+                      <label for="type">Purpose</label>
+                      <select id="type" class="form-control" [(ngModel)]="purpose">
+                      <option value="assistants">Assistants</option>
+                      <option value="vision">Vision</option>
+                      <option value="batch">Batch</option>
+                      <option value="fine-tune">Fine Tune</option>
+                      </select>
+                  </div>
+
+                  <div class="form-group mt-2">
+                      <button class="btn btn-primary" (click)="createFile()">Create File</button>
+                  </div>
+
+              </div>
+              
+            </div>
+            <div *ngIf="modeNow === 'assistant_file'" class="row scrollable-content">
+              <!-- list file -->
+              <div class="col-md-6 pt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h3>List Assistant File</h3>
+                  
+                  <button class="btn btn-sm btn-outline-secondary" *ngIf="activeAssistant" (click)="refreshListAssistantFiles()">
+                    <i class="bi bi-arrow-clockwise"></i> <!-- Refresh Icon -->
+                  </button>
+                  <button class="btn btn-sm btn-secondary" *ngIf="!activeAssistant">
+                    <i class="bi bi-arrow-clockwise"></i> <!-- Refresh Icon -->
+                  </button>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">{{ activeAssistant ? activeAssistant.id : ' Not Selected ' }}</label>
+                </div>
+
+                <!-- file List Group -->
+                <ul class="list-group mt-4">
+                
+                  <li *ngFor="let assistantFile of assistantFiles; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
+                    <div (click)="selectFile(assistantFile)">
+                     
+                      <div> {{ assistantFile.object }}</div>
+                      <div> {{ assistantFile.assistant_id }}</div>
+                      <div class="text-muted" style="font-size: 0.55rem;">{{assistantFile.id}}</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" (click)="confirmDeleteAssistantFile(i)">
+                      <i class="bi bi-trash"></i> <!-- Delete Icon -->
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+            
+              <!-- create file -->
+              <div class="col-md-6 pt-4">
+                <!-- Title -->
+                <h3 class="text-center">Create Asistant File</h3>
+
+                <!-- Assistant Selected -->
+                <div class="form-group">
+                  <label class="form-label">Assistant Selected</label>
+                  <div class="input-group" (click)="goToStep('assistant')">
+                    <!-- Input field (disabled) -->
+                    <label class="form-control d-flex justify-content-between align-items-center" style="padding-right: 45px;">{{ activeAssistant ? activeAssistant.id : ' ' }}</label>
+                    <button type="button" class="btn btn-danger" *ngIf="!activeAssistant"><i class="bi bi-x"></i> </button>
+                    <button type="button" class="btn btn-success" *ngIf="activeAssistant"><i class="bi bi-check"></i> </button>
+                  </div>
+                </div>
+
+                <!-- File Selected -->
+                <div class="form-group mt-2">
+                  <label class="form-label">File Selected</label>
+                  <div class="input-group" (click)="goToStep('file')">
+                    <!-- Input field (disabled) -->
+                    <label class="form-control d-flex justify-content-between align-items-center" style="padding-right: 45px;">{{ activeFile ? activeFile.id : ' ' }}</label>
+                    <button type="button" class="btn btn-danger" *ngIf="!activeFile"><i class="bi bi-x"></i> </button>
+                    <button type="button" class="btn btn-success" *ngIf="activeFile"><i class="bi bi-check"></i> </button>
+                  </div>
+                </div>
+
+                <div class="form-group mt-2">
+                    <button class="btn btn-primary" *ngIf="activeFile && activeAssistant" (click)="createAssistantFile()">Create Assistant File</button>
+                    <button class="btn btn-secondary" *ngIf="!activeFile || !activeAssistant" >Create Assistant File</button>
+                </div>
+
+              </div>
+            </div>
+            <div *ngIf="modeNow === 'run'">mode run</div>
+        </div>
+
+        <button class="btn btn-outline-dark align-self-center" style="height: 50vh;" (click)="goToNextStep()">
+            &gt;
+        </button>
+
+    </div>
+  
+    <!-- Config Popup (Modal) -->
+    <div class="modal" tabindex="-1" [ngClass]="{'d-block': showConfigPopup}" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header d-flex justify-content-between">
+            <h5 class="modal-title">Settings</h5>
+            <button type="button" class="btn btn-danger" (click)="toggleConfigPopup()" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="api-key">API Key</label>
+              <input id="api-key" [(ngModel)]="apiKey" type="password" class="form-control" placeholder="Enter API Key">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="saveKey()">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="toggleConfigPopup()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" tabindex="-1" [ngClass]="{'d-block': showDeleteConfirmation}" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+        <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between">
+            <h5 class="modal-title">Delete Confirmation</h5>
+            <button type="button" class="btn btn-danger" (click)="closeDeleteConfirmation()" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete this assistant?</p>
+              <div *ngIf="assistantToDelete">
+                <div>Name: {{assistantToDelete.name}}</div>
+                <div class="text-muted" style="font-size: 0.8rem;">Id: {{assistantToDelete.id}}</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirmation()">Cancel</button>
+            <button type="button" class="btn btn-danger" (click)="deleteAssistant()">Delete</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" tabindex="-1" [ngClass]="{'d-block': showSuccessModal}" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Success</h5>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>{{successMessage}}</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="closeModal()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" tabindex="-1" [ngClass]="{'d-block': showErrorModal}"  role="dialog" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header d-flex justify-content-between">
+            <h5 class="modal-title">Error</h5>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>{{ errorMessage }}</label>
+            </div>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" (click)="closeModal()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  
